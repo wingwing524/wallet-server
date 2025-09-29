@@ -1,0 +1,39 @@
+{
+  "name": "expense-tracker",
+  "version": "1.0.0",
+  "description": "Mobile-friendly expense tracking app for iPhone 15 Pro",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm install && npm run build",
+    "start": "node server/index.js",
+    "migrate": "node server/migrate.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "expense",
+    "tracker",
+    "mobile",
+    "react",
+    "express"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}

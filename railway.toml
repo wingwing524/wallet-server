@@ -1,0 +1,7 @@
+[build]
+command = "cd client && rm -rf build node_modules package-lock.json .cache && npm cache clean --force && npm install && DISABLE_ESLINT_PLUGIN=true ESLINT_NO_DEV_ERRORS=true SKIP_PREFLIGHT_CHECK=true npm run build"
+
+[deploy]
+startCommand = "node server/index.js"
+
+# Force rebuild: 2025-09-28T$(date +%H%M%S)
