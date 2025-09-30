@@ -21,21 +21,34 @@ if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// Middleware
+// Middleware - Optimized for API server
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.CLIENT_URL, /\.railway\.app$/].filter(Boolean)
-    : function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
+    ? function (origin, callback) {
+        // Allow requests with no origin (mobile apps, API tools)
         if (!origin) return callback(null, true);
         
-        // Allow localhost and local network IPs
+        // Allow Railway domains and specified client URLs
         const allowedOrigins = [
-          /^http:\/\/localhost:\d+$/,
-          /^http:\/\/127\.0\.0\.1:\d+$/,
-          /^http:\/\/192\.168\.\d+\.\d+:\d+$/,
-          /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/,
-          /^http:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+:\d+$/
+          /\.railway\.app$/,
+          process.env.CLIENT_URL
+        ].filter(Boolean);
+        
+        const isAllowed = allowedOrigins.some(pattern => 
+          typeof pattern === 'string' ? origin === pattern : pattern.test(origin)
+        );
+        callback(null, isAllowed);
+      }
+    : function (origin, callback) {
+        // Development: Allow all localhost and local network origins
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+          /^https?:\/\/localhost:\d+$/,
+          /^https?:\/\/127\.0\.0\.1:\d+$/,
+          /^https?:\/\/192\.168\.\d+\.\d+:\d+$/,
+          /^https?:\/\/10\.\d+\.\d+\.\d+:\d+$/,
+          /^https?:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+:\d+$/
         ];
         
         const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
@@ -47,11 +60,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use('/api', apiLimiter);
-
-// Serve static files from React build in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-}
 
 // Initialize database with retry logic
 let db;
@@ -404,12 +412,23 @@ app.get('/api/categories', (req, res) => {
   res.json(categories);
 });
 
-// Catch-all handler: send back React's index.html file in production
-if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+// API catch-all for undefined routes
+app.all('*', (req, res) => {
+  res.status(404).json({ 
+    error: 'Route not found',
+    message: `${req.method} ${req.path} is not supported`,
+    availableEndpoints: [
+      'GET /health',
+      'GET /api/categories',
+      'POST /api/auth/register',
+      'POST /api/auth/login',
+      'GET /api/expenses',
+      'POST /api/expenses',
+      'PUT /api/expenses/:id',
+      'DELETE /api/expenses/:id'
+    ]
   });
-}
+});
 
 // Graceful shutdown
 process.on('SIGINT', async () => {

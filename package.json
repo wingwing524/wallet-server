@@ -4,10 +4,9 @@
   "description": "Mobile-friendly expense tracking app for iPhone 15 Pro",
   "main": "server/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "nodemon server/index.js",
     "server": "nodemon server/index.js",
-    "client": "cd client && npm start",
-    "build": "cd client && npm install && npm run build",
+    "build": "echo 'API server ready for deployment'",
     "start": "node server/index.js",
     "migrate": "node server/migrate.js"
   },
@@ -24,7 +23,6 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0",
     "nodemon": "^3.0.1"
   },
   "keywords": [
