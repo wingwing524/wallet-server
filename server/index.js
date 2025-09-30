@@ -28,9 +28,13 @@ app.use(cors({
         // Allow requests with no origin (mobile apps, API tools)
         if (!origin) return callback(null, true);
         
-        // Allow Railway domains and specified client URLs
+        // Allow Railway domains, Vercel, Netlify, and common frontend platforms
         const allowedOrigins = [
           /\.railway\.app$/,
+          /\.vercel\.app$/,
+          /\.netlify\.app$/,
+          /\.herokuapp\.com$/,
+          /^https?:\/\/localhost:\d+$/,
           process.env.CLIENT_URL
         ].filter(Boolean);
         
