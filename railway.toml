@@ -1,8 +1,8 @@
 [build]
-command = "npm install --production"
+command = "npm install"
 
 [deploy]
-startCommand = "node test-server.js"
+startCommand = "npm start"
 
 [env]
 NODE_ENV = "production"
