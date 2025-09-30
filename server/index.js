@@ -21,50 +21,57 @@ if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// Middleware - Optimized for API server
+// Middleware - CORS configuration for API server
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? function (origin, callback) {
-        // Allow requests with no origin (mobile apps, API tools)
-        if (!origin) return callback(null, true);
-        
-        // Allow Railway domains, Vercel, Netlify, localhost, and common frontend platforms
-        const allowedOrigins = [
-          /\.railway\.app$/,
-          /\.vercel\.app$/,
-          /\.netlify\.app$/,
-          /\.herokuapp\.com$/,
-          /^https?:\/\/localhost:\d+$/,
-          /^https?:\/\/127\.0\.0\.1:\d+$/,
-          'http://localhost:3000',
-          'http://localhost:3001',
-          'http://localhost:5173',
-          'http://localhost:8080',
-          process.env.CLIENT_URL
-        ].filter(Boolean);
-        
-        const isAllowed = allowedOrigins.some(pattern => 
-          typeof pattern === 'string' ? origin === pattern : pattern.test(origin)
-        );
-        callback(null, isAllowed);
-      }
-    : function (origin, callback) {
-        // Development: Allow all localhost and local network origins
-        if (!origin) return callback(null, true);
-        
-        const allowedOrigins = [
-          /^https?:\/\/localhost:\d+$/,
-          /^https?:\/\/127\.0\.0\.1:\d+$/,
-          /^https?:\/\/192\.168\.\d+\.\d+:\d+$/,
-          /^https?:\/\/10\.\d+\.\d+\.\d+:\d+$/,
-          /^https?:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+:\d+$/
-        ];
-        
-        const isAllowed = allowedOrigins.some(pattern => pattern.test(origin));
-        callback(null, isAllowed);
-      },
+  origin: function (origin, callback) {
+    // Always allow requests with no origin (mobile apps, API tools)
+    if (!origin) return callback(null, true);
+    
+    // In production, allow specific domains
+    if (process.env.NODE_ENV === 'production') {
+      const allowedOrigins = [
+        /\.railway\.app$/,
+        /\.vercel\.app$/,
+        /\.netlify\.app$/,
+        /\.herokuapp\.com$/,
+        /^https?:\/\/localhost:\d+$/,
+        /^https?:\/\/127\.0\.0\.1:\d+$/,
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:5173',
+        'http://localhost:8080',
+        process.env.CLIENT_URL
+      ].filter(Boolean);
+      
+      const isAllowed = allowedOrigins.some(pattern => 
+        typeof pattern === 'string' ? origin === pattern : pattern.test(origin)
+      );
+      callback(null, isAllowed);
+    } else {
+      // Development: Allow all localhost and local network origins
+      const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):\d+$/.test(origin);
+      callback(null, isLocalhost || !origin);
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// Additional CORS headers for better compatibility
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  next();
+});
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
