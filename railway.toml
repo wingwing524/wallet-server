@@ -2,7 +2,7 @@
 command = "npm install --production"
 
 [deploy]
-startCommand = "node server/index.js"
+startCommand = "node test-server.js"
 
 [env]
 NODE_ENV = "production"
