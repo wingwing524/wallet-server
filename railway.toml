@@ -2,7 +2,7 @@
 command = "npm install"
 
 [deploy]
-startCommand = "npm start"
+startCommand = "node server/index.js"
 
 [env]
 NODE_ENV = "production"
