@@ -16,6 +16,11 @@ const { createToken, authenticateToken, optionalAuth, authLimiter, apiLimiter } 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Debug port information
+console.log('🔍 Port Debug:');
+console.log('process.env.PORT:', process.env.PORT);
+console.log('Final PORT:', PORT);
+
 // Trust proxy for Railway deployment
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
@@ -493,7 +498,18 @@ async function startServer() {
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`🌐 Host: 0.0.0.0:${PORT}`);
-    console.log(`📱 Optimized for iPhone 15 Pro`);
+    console.log(`� Railway URL: https://wallet-server-production-e8ef.up.railway.app`);
+    console.log(`�📱 Optimized for iPhone 15 Pro`);
+    
+    // Test internal health
+    console.log('🔍 Internal health check...');
+    setTimeout(() => {
+      require('http').get(`http://localhost:${PORT}/health`, (res) => {
+        console.log('✅ Internal health check passed:', res.statusCode);
+      }).on('error', (err) => {
+        console.log('❌ Internal health check failed:', err.message);
+      });
+    }, 1000);
   });
   
   // Initialize database after server starts (non-blocking)
