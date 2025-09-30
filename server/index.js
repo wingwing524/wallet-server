@@ -26,59 +26,25 @@ if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-// Middleware - CORS configuration for API server (permissive for development)
+// Middleware - CORS configuration (allow all origins)
 app.use(cors({
-  origin: function (origin, callback) {
-    // Always allow requests with no origin (mobile apps, API tools, Postman)
-    if (!origin) return callback(null, true);
-    
-    // Define allowed origins for both development and production
-    const allowedOrigins = [
-      // Railway domains
-      /\.railway\.app$/,
-      // Other cloud platforms
-      /\.vercel\.app$/,
-      /\.netlify\.app$/,
-      /\.herokuapp\.com$/,
-      // Localhost for development (any port)
-      /^https?:\/\/localhost:\d+$/,
-      /^https?:\/\/127\.0\.0\.1:\d+$/,
-      // Specific localhost ports
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:5173',
-      'http://localhost:8080',
-      // Environment variable
-      process.env.CLIENT_URL
-    ].filter(Boolean);
-    
-    const isAllowed = allowedOrigins.some(pattern => 
-      typeof pattern === 'string' ? origin === pattern : pattern.test(origin)
-    );
-    
-    console.log(`🌐 CORS Check: ${origin} -> ${isAllowed ? 'ALLOWED' : 'BLOCKED'}`);
-    callback(null, isAllowed);
-  },
+  origin: true, // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true
 }));
 
-// Additional CORS headers for better compatibility
+// Additional CORS headers - allow everything
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Set CORS headers
-  if (origin) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
+  // Allow all origins
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
   res.header('Access-Control-Allow-Credentials', 'true');
   
   // Handle preflight OPTIONS requests
   if (req.method === 'OPTIONS') {
-    console.log(`✅ Preflight request handled for: ${origin}`);
+    console.log(`✅ Preflight OPTIONS request handled`);
     res.status(200).end();
     return;
   }
