@@ -104,12 +104,29 @@ async function initializeDatabase(retries = 5) {
   return false;
 }
 
-// Health check endpoint
+// Health check endpoint - always works
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    database: db ? 'connected' : 'disconnected'
+    database: db ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV,
+    port: PORT
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Wallet Server API',
+    status: 'running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth/*',
+      expenses: '/api/expenses',
+      categories: '/api/categories'
+    }
   });
 });
 
@@ -462,29 +479,47 @@ process.on('SIGTERM', async () => {
 // Start server
 async function startServer() {
   console.log('🚀 Starting expense tracker server...');
+  console.log('🔧 Environment:', process.env.NODE_ENV);
+  console.log('🌐 Port:', PORT);
   
   // Debug Railway environment
   if (process.env.NODE_ENV === 'production') {
     console.log('🏗️  Production Environment Debug:');
-    console.log('PGHOST:', process.env.PGHOST);
-    console.log('PGPORT:', process.env.PGPORT);
-    console.log('PGDATABASE:', process.env.PGDATABASE);
-    console.log('PGUSER:', process.env.PGUSER ? '***' : 'undefined');
-    console.log('PGPASSWORD:', process.env.PGPASSWORD ? '***' : 'undefined');
     console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+    console.log('Railway deployment detected');
   }
   
-  const dbInitialized = await initializeDatabase();
-  
-  app.listen(PORT, '0.0.0.0', () => {
+  // Start server first, then initialize database
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server running on port ${PORT}`);
+    console.log(`🌐 Host: 0.0.0.0:${PORT}`);
     console.log(`📱 Optimized for iPhone 15 Pro`);
-    console.log(`📊 Database status: ${dbInitialized ? 'Connected' : 'Disconnected'}`);
-    
-    if (!dbInitialized) {
-      console.log('⚠️  Server started without database. Check Railway PostgreSQL service connection.');
-    }
   });
+  
+  // Initialize database after server starts (non-blocking)
+  initializeDatabase().then(dbInitialized => {
+    console.log(`📊 Database status: ${dbInitialized ? 'Connected' : 'Disconnected'}`);
+    if (!dbInitialized) {
+      console.log('⚠️  Server running without database. Check Railway PostgreSQL service connection.');
+    }
+  }).catch(error => {
+    console.error('❌ Database initialization failed:', error.message);
+    console.log('⚠️  Server running without database connection.');
+  });
+
+  return server;
 }
 
-startServer().catch(console.error);
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+startServer().catch(error => {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+});
